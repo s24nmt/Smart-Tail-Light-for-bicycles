@@ -61,11 +61,11 @@ bool systemPower = true; // D1 बटन के लिए ON/OFF फ्लैग
 
 // --- उन्नत ब्रेकिंग डिटेक्शन वेरिएबल्स (Balanced Normal + Hard Braking) ---
 const float BRAKE_DIRECTION = -1.0;        
-const float DEFAULT_BRAKE_THRESHOLD = 0.18;
+const float DEFAULT_BRAKE_THRESHOLD = 0.15;
 const float DEFAULT_BRAKE_RELEASE_THRESHOLD = 0.06;
 const int DEFAULT_REQUIRED_BRAKE_COUNT = 7;
 
-float brakeThreshold = DEFAULT_BRAKE_THRESHOLD;               // Web UI से एडजस्टेबल (0.10 to 0.22)
+float brakeThreshold = DEFAULT_BRAKE_THRESHOLD;               // Web UI से एडजस्टेबल (0.05 to 0.18)
 float brakeReleaseThreshold = DEFAULT_BRAKE_RELEASE_THRESHOLD; // Web UI से एडजस्टेबल (0.04 to 0.08)
 int requiredBrakeCount = DEFAULT_REQUIRED_BRAKE_COUNT;         // Web UI से एडजस्टेबल (4 to 10)
 const float maxVerticalShock = 0.70;       // गड्ढों और झटकों को फ़िल्टर करने के लिए
@@ -130,94 +130,566 @@ int i2cErrorCount = 0;
 
 const float motionThreshold = 0.05; 
 
-// Mobile-Friendly Web UI HTML
+// Modern Neon Dark Web UI HTML with Sleek Automotive Telemetry Aesthetic
 const char WEB_UI_HTML[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SmartBrake Settings</title>
+<title>SmartBrake</title>
 <style>
-- { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-  body { margin: 0; padding: 16px; background: #0f172a; color: #f8fafc; display: flex; justify-content: center; }
-  .card { width: 100%; max-width: 420px; background: #1e293b; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
-  h1 { margin: 0 0 6px; font-size: 22px; text-align: center; color: #38bdf8; }
-  .sub { margin: 0 0 20px; font-size: 13px; text-align: center; color: #94a3b8; }
-  .ctrl-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 20px; }
-  .btn-ctrl { background: #334155; padding: 10px 6px; font-size: 13px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-  .btn-ctrl span { font-size: 12px; color: #38bdf8; font-weight: 700; }
-  .group { margin-bottom: 20px; background: #0f172a; padding: 14px; border-radius: 12px; }
-  .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .label { font-size: 14px; font-weight: 600; }
-  .val { font-size: 15px; font-weight: 700; color: #38bdf8; background: #1e293b; padding: 3px 10px; border-radius: 8px; }
-  input[type=range] { width: 100%; accent-color: #38bdf8; height: 8px; cursor: pointer; }
-  .range-ends { display: flex; justify-content: space-between; font-size: 11px; color: #64748b; margin-top: 4px; }
-  .btns { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; }
-  button { width: 100%; padding: 13px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; color: #fff; }
-  .btn-save { background: #16a34a; }
-  .btn-default { background: #2563eb; }
-  .btn-off { background: #dc2626; }
-  button:active { opacity: 0.85; transform: scale(0.99); }
-  #status { margin-top: 14px; text-align: center; font-size: 14px; min-height: 20px; color: #4ade80; font-weight: 500; }
+  * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    min-height: 100vh;
+    padding: 14px;
+    background: radial-gradient(circle at 50% 0%, #111b27 0%, #06090e 80%);
+    color: #f8fafc;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .dashboard {
+    width: 100%;
+    max-width: 420px;
+    background: linear-gradient(180deg, #10151d 0%, #0a0e14 100%);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 26px;
+    padding: 18px 16px;
+    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding: 0 2px;
+  }
+  .brand-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand-bike {
+    width: 38px;
+    height: 24px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.45));
+  }
+  .brand-title {
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    line-height: 1;
+  }
+  .brand-title .smart { color: #e2e8f0; }
+  .brand-title .brake { color: #f43f5e; text-shadow: 0 0 12px rgba(244, 63, 94, 0.45); }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .conn-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    color: #4ade80;
+    background: rgba(16, 185, 129, 0.14);
+    border: 1px solid rgba(74, 222, 128, 0.35);
+    padding: 5px 10px;
+    border-radius: 999px;
+    box-shadow: 0 0 12px rgba(74, 222, 128, 0.15);
+  }
+  .conn-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 8px #4ade80;
+  }
+  .signal-icon {
+    width: 18px;
+    height: 18px;
+    stroke: #64748b;
+  }
+  .wave-box {
+    background: linear-gradient(180deg, #0d131b 0%, #090d13 100%);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 16px;
+    padding: 8px 10px;
+    margin-bottom: 12px;
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.6);
+  }
+  .wave-svg {
+    width: 100%;
+    height: 36px;
+    display: block;
+    overflow: visible;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .card {
+    background: linear-gradient(180deg, #131a24 0%, #0e131b 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 12px;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.2s ease;
+  }
+  .card:hover { border-color: rgba(56, 189, 248, 0.4); }
+  .card:active { transform: scale(0.98); }
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-bottom: 6px;
+  }
+  .bat-val {
+    font-size: 20px;
+    font-weight: 800;
+    color: #f8fafc;
+    margin-bottom: 8px;
+    letter-spacing: -0.3px;
+  }
+  .bat-val small {
+    font-size: 12px;
+    font-weight: 600;
+    color: #94a3b8;
+  }
+  .bat-bar-bg {
+    width: 100%;
+    height: 6px;
+    background: #1e293b;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .bat-bar-fill {
+    height: 100%;
+    width: %BAT%%;
+    background: linear-gradient(90deg, #22c55e 0%, #eab308 100%);
+    border-radius: 99px;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.45);
+    transition: width 0.3s ease;
+  }
+  .bright-steps {
+    display: flex;
+    align-items: flex-end;
+    gap: 5px;
+    height: 28px;
+    margin-top: 2px;
+    margin-bottom: 5px;
+  }
+  .b-step {
+    flex: 1;
+    background: #1e293b;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+  .b-step.s1 { height: 12px; }
+  .b-step.s2 { height: 19px; }
+  .b-step.s3 { height: 26px; }
+  .b-step.on {
+    background: linear-gradient(180deg, #67e8f9, #06b6d4);
+    box-shadow: 0 0 10px rgba(34, 211, 238, 0.55);
+  }
+  .bright-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #64748b;
+    font-weight: 600;
+  }
+  .bright-labels span.active-lbl { color: #38bdf8; }
+  .mode-card {
+    background: linear-gradient(180deg, #131a24 0%, #0e131b 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    padding: 12px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+  .mode-card:active { transform: scale(0.985); }
+  .mode-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-bottom: 8px;
+    padding-left: 2px;
+  }
+  .mode-selector-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mode-arrow {
+    color: #64748b;
+    font-size: 16px;
+    font-weight: 700;
+    user-select: none;
+  }
+  .mode-pill {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: radial-gradient(circle at 50% 50%, rgba(239, 68, 68, 0.24) 0%, rgba(127, 29, 29, 0.28) 100%);
+    border: 1.5px solid #f43f5e;
+    box-shadow: 0 0 18px rgba(244, 63, 94, 0.45), inset 0 0 12px rgba(244, 63, 94, 0.25);
+  }
+  .mode-pill-text {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.2px;
+  }
+  .tap-icon {
+    width: 18px;
+    height: 18px;
+    stroke: #cbd5e1;
+    flex-shrink: 0;
+  }
+  .sliders-panel {
+    background: linear-gradient(180deg, #131a24 0%, #0d1219 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .slider-group {
+    margin-bottom: 14px;
+  }
+  .slider-group:last-child {
+    margin-bottom: 0;
+  }
+  .s-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 7px;
+  }
+  .s-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .s-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #cbd5e1;
+  }
+  .s-val {
+    font-size: 13px;
+    font-weight: 700;
+    color: #e2e8f0;
+  }
+  .cnt-pill {
+    font-size: 11px;
+    font-weight: 800;
+    color: #fbbf24;
+    background: rgba(245, 158, 11, 0.14);
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    padding: 1px 8px;
+    border-radius: 999px;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.2);
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 99px;
+    outline: none;
+    cursor: pointer;
+    background: #1e293b;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 3px solid #38bdf8;
+    box-shadow: 0 0 10px #38bdf8;
+    cursor: pointer;
+  }
+  input[type=range].thr-slider::-webkit-slider-thumb {
+    border-color: #4ade80;
+    box-shadow: 0 0 10px #4ade80;
+  }
+  input[type=range].cnt-slider::-webkit-slider-thumb {
+    border-color: #fbbf24;
+    box-shadow: 0 0 10px #fbbf24;
+  }
+  .s-ends {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #64748b;
+    margin-top: 5px;
+    font-weight: 500;
+  }
+  .btn-save {
+    width: 100%;
+    padding: 13px;
+    border-radius: 999px;
+    border: 1px solid #34d399;
+    background: linear-gradient(90deg, #059669 0%, #10b981 50%, #059669 100%);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    cursor: pointer;
+    box-shadow: 0 0 22px rgba(16, 185, 129, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    margin-bottom: 10px;
+    transition: transform 0.15s ease;
+  }
+  .btn-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .btn-sub {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 10px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+  .btn-default {
+    background: #131a24;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #cbd5e1;
+  }
+  .btn-off {
+    background: rgba(127, 29, 29, 0.25);
+    border: 1px solid rgba(244, 63, 94, 0.45);
+    color: #fda4af;
+    box-shadow: 0 0 14px rgba(244, 63, 94, 0.15);
+  }
+  .power-badge {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid #f43f5e;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #f43f5e;
+    font-size: 11px;
+    box-shadow: 0 0 8px rgba(244, 63, 94, 0.45);
+    flex-shrink: 0;
+  }
+  button:active {
+    transform: scale(0.97);
+    opacity: 0.92;
+  }
+  #status {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 12.5px;
+    min-height: 17px;
+    color: #4ade80;
+    font-weight: 600;
+  }
 </style>
 </head>
 <body>
-<div class="card">
-  <h1>SmartBrake</h1>
-  <p class="sub">Brake Sensitivity Settings</p>
-
-  <div class="ctrl-grid">
-    <button class="btn-ctrl" onclick="changeMode()">Mode<span id="modeVal">%MODE% / 10</span></button>
-    <button class="btn-ctrl" onclick="changeBrightness()">Brightness<span id="brightVal">%BRIGHT%</span></button>
-    <button class="btn-ctrl" onclick="checkBattery()">Battery<span id="batVal">%BAT%%</span></button>
-  </div>
-
-  <div class="group">
-    <div class="row">
-      <span class="label">Brake Threshold</span>
-      <span class="val" id="thrVal">%THR%</span>
+<div class="dashboard">
+  <div class="header">
+    <div class="brand-wrap">
+      <svg class="brand-bike" viewBox="0 0 42 26" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="8" cy="18" r="6" stroke="#22d3ee"/>
+        <circle cx="34" cy="18" r="6" stroke="#f43f5e"/>
+        <path d="M8 18 L17 9 L27 9 L34 18" stroke="#38bdf8"/>
+        <path d="M17 9 L21 18 L27 9" stroke="#22d3ee"/>
+        <path d="M14 6 L19 6 M26 6 L30 6" stroke="#94a3b8"/>
+      </svg>
+      <div class="brand-title"><span class="smart">Smart</span><span class="brake">Brake</span></div>
     </div>
-    <input type="range" id="thr" min="0.10" max="0.22" step="0.01" value="%THR%" oninput="document.getElementById('thrVal').innerText=parseFloat(this.value).toFixed(2)">
-    <div class="range-ends"><span>0.10 (Sensitive)</span><span>0.22 (Hard)</span></div>
-  </div>
-
-  <div class="group">
-    <div class="row">
-      <span class="label">Brake Release Threshold</span>
-      <span class="val" id="relVal">%REL%</span>
+    <div class="header-right">
+      <div class="conn-pill"><span class="conn-dot"></span>CONNECTED</div>
+      <svg class="signal-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/>
+        <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/>
+        <circle cx="12" cy="12" r="2" fill="#64748b"/>
+        <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/>
+        <path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/>
+      </svg>
     </div>
-    <input type="range" id="rel" min="0.04" max="0.08" step="0.01" value="%REL%" oninput="document.getElementById('relVal').innerText=parseFloat(this.value).toFixed(2)">
-    <div class="range-ends"><span>0.04</span><span>0.08</span></div>
   </div>
 
-  <div class="group">
-    <div class="row">
-      <span class="label">Required Brake Count</span>
-      <span class="val" id="cntVal">%CNT%</span>
+  <div class="wave-box">
+    <svg class="wave-svg" viewBox="0 0 320 38" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="telemetryGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#22d3ee"/>
+          <stop offset="45%" stop-color="#38bdf8"/>
+          <stop offset="70%" stop-color="#f97316"/>
+          <stop offset="100%" stop-color="#ef4444"/>
+        </linearGradient>
+        <filter id="waveGlow" x="-10%" y="-20%" width="120%" height="140%">
+          <feGaussianBlur stdDeviation="2.2" result="blur"/>
+          <feMerge>
+            <feMergeNode in="blur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+      <path d="M0,22 Q20,10 40,22 T80,22 T120,16 T160,24 T200,14 T240,24 T280,15 T320,22" fill="none" stroke="url(#telemetryGrad)" stroke-width="2.4" stroke-linecap="round" filter="url(#waveGlow)"/>
+    </svg>
+  </div>
+
+  <div class="grid-2">
+    <div class="card" onclick="checkBattery()">
+      <div class="card-top">
+        <span>Battery</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="18" height="10" rx="2" ry="2"/>
+          <line x1="22" y1="11" x2="22" y2="13"/>
+          <rect x="5" y="10" width="9" height="4" fill="#4ade80" stroke="none"/>
+        </svg>
+      </div>
+      <div class="bat-val" id="batVal">%BAT%% <small>%VOLT%V</small></div>
+      <div class="bat-bar-bg"><div class="bat-bar-fill" id="batBar"></div></div>
     </div>
-    <input type="range" id="cnt" min="4" max="10" step="1" value="%CNT%" oninput="document.getElementById('cntVal').innerText=this.value">
-    <div class="range-ends"><span>4 (Faster)</span><span>10 (Strict)</span></div>
-  </div>
 
-  <div class="group">
-    <div class="row">
-      <span class="label">Auto-Off Timeout</span>
-      <span class="val" id="tmoVal">%TMO_LBL%</span>
+    <div class="card" onclick="changeBrightness()">
+      <div class="card-top">
+        <span>Brightness</span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+        </svg>
+      </div>
+      <div class="bright-steps">
+        <div class="b-step s1" id="bp1"></div>
+        <div class="b-step s2" id="bp2"></div>
+        <div class="b-step s3" id="bp3"></div>
+      </div>
+      <div class="bright-labels">
+        <span id="bl1">Low</span>
+        <span id="bl2">Medium</span>
+        <span id="bl3">High</span>
+      </div>
     </div>
-    <input type="range" id="tmo" min="0" max="30" step="1" value="%TMO%" oninput="document.getElementById('tmoVal').innerText=(this.value==0?'0s (Off)':this.value+'s')">
-    <div class="range-ends"><span>0s (Off)</span><span>30s</span></div>
   </div>
 
-  <div class="btns">
-    <button class="btn-save" onclick="saveSettings()">Save Settings</button>
-    <button class="btn-default" onclick="resetDefaults()">Default Settings</button>
-    <button class="btn-off" onclick="turnOffAP()">Turn Off Soft AP</button>
+  <div class="mode-card" onclick="changeMode()">
+    <div class="mode-header">Active Light Mode</div>
+    <div class="mode-selector-row">
+      <span class="mode-arrow">&lsaquo;</span>
+      <div class="mode-pill">
+        <span class="mode-pill-text" id="modeDisplay">%MODE_PAD% &bull; %MODE_NAME%</span>
+        <svg class="tap-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/>
+          <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/>
+          <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/>
+          <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>
+        </svg>
+      </div>
+      <span class="mode-arrow">&rsaquo;</span>
+    </div>
+  </div>
+
+  <div class="sliders-panel">
+    <div class="slider-group">
+      <div class="s-row">
+        <span class="s-label">Brake Threshold (Sensitivity)</span>
+        <span class="s-val" id="thrVal">%THR%</span>
+      </div>
+      <input type="range" class="thr-slider" id="thr" min="0.05" max="0.18" step="0.01" value="%THR%" oninput="updateSliderUI()">
+      <div class="s-ends"><span>Sensitive</span><span>Hard</span></div>
+    </div>
+
+    <div class="slider-group">
+      <div class="s-row">
+        <span class="s-label">Brake Release Threshold</span>
+        <span class="s-val" id="relVal">%REL%</span>
+      </div>
+      <input type="range" class="blue-slider" id="rel" min="0.04" max="0.08" step="0.01" value="%REL%" oninput="updateSliderUI()">
+    </div>
+
+    <div class="slider-group">
+      <div class="s-row">
+        <div class="s-title-wrap">
+          <span class="s-label">Required Brake Count</span>
+          <span class="cnt-pill" id="cntVal">%CNT%</span>
+        </div>
+      </div>
+      <input type="range" class="cnt-slider" id="cnt" min="4" max="10" step="1" value="%CNT%" oninput="updateSliderUI()">
+      <div class="s-ends"><span>Faster</span><span>Strict</span></div>
+    </div>
+
+    <div class="slider-group">
+      <div class="s-row">
+        <span class="s-label">Auto-Off Timeout</span>
+        <span class="s-val" id="tmoVal">%TMO_LBL%</span>
+      </div>
+      <input type="range" class="blue-slider" id="tmo" min="0" max="30" step="1" value="%TMO%" oninput="updateSliderUI()">
+    </div>
+  </div>
+
+  <button class="btn-save" onclick="saveSettings()">&#10003; SAVE SETTINGS</button>
+  <div class="btn-row">
+    <button class="btn-sub btn-default" onclick="resetDefaults()">&#8634; Restore Defaults</button>
+    <button class="btn-sub btn-off" onclick="turnOffAP()">Deactivate Soft AP <span class="power-badge">&#9211;</span></button>
   </div>
   <div id="status"></div>
 </div>
 
 <script>
+const modeNames = ["", "Slow Flash", "Smooth Breathing", "Triple Strobe", "Red-Yellow", "One-Way Scanner", "Amber Comet", "Alternating 2x2", "Red Sparkle", "Heartbeat Pulse", "Rain / Fog Strobe"];
+
+function updateBrightUI(lvl) {
+  for (let i = 1; i <= 3; i++) {
+    document.getElementById('bp' + i).className = 'b-step s' + i + (lvl >= i ? ' on' : '');
+    document.getElementById('bl' + i).className = (lvl === i ? 'active-lbl' : '');
+  }
+}
+
+function updateSliderUI() {
+  const thr = document.getElementById('thr');
+  const thrPct = ((thr.value - thr.min) / (thr.max - thr.min)) * 100;
+  document.getElementById('thrVal').innerText = parseFloat(thr.value).toFixed(2);
+  thr.style.background = `linear-gradient(90deg, #4ade80 0%, #f97316 ${thrPct}%, #ef4444 ${thrPct}%, #1e293b ${thrPct}%)`;
+
+  const rel = document.getElementById('rel');
+  const relPct = ((rel.value - rel.min) / (rel.max - rel.min)) * 100;
+  document.getElementById('relVal').innerText = parseFloat(rel.value).toFixed(2);
+  rel.style.background = `linear-gradient(90deg, #38bdf8 0%, #38bdf8 ${relPct}%, #1e293b ${relPct}%)`;
+
+  const cnt = document.getElementById('cnt');
+  const cntPct = ((cnt.value - cnt.min) / (cnt.max - cnt.min)) * 100;
+  document.getElementById('cntVal').innerText = cnt.value;
+  cnt.style.background = `linear-gradient(90deg, #f59e0b 0%, #fbbf24 ${cntPct}%, #1e293b ${cntPct}%)`;
+
+  const tmo = document.getElementById('tmo');
+  const tmoPct = ((tmo.value - tmo.min) / (tmo.max - tmo.min)) * 100;
+  document.getElementById('tmoVal').innerText = (tmo.value == 0 ? '0s (Off)' : tmo.value + 's');
+  tmo.style.background = `linear-gradient(90deg, #38bdf8 0%, #38bdf8 ${tmoPct}%, #1e293b ${tmoPct}%)`;
+}
+
+updateBrightUI(%BRIGHT_LVL%);
+updateSliderUI();
+
 function setStatus(msg, color) {
   const s = document.getElementById('status');
   s.style.color = color || '#4ade80';
@@ -227,28 +699,30 @@ function changeMode() {
   fetch('/mode')
     .then(r => r.json())
     .then(d => {
-      document.getElementById('modeVal').innerText = d.mode + ' / 10';
-      setStatus('Switched to Mode ' + d.mode, '#4ade80');
+      const mStr = d.mode < 10 ? '0' + d.mode : '' + d.mode;
+      document.getElementById('modeDisplay').innerText = mStr + ' • ' + (modeNames[d.mode] || '');
+      setStatus('Mode ' + d.mode + ': ' + modeNames[d.mode], '#fda4af');
     })
-    .catch(() => setStatus('Error changing mode', '#f87171'));
+    .catch(() => setStatus('Error changing mode', '#fb7185'));
 }
 function changeBrightness() {
   fetch('/brightness')
     .then(r => r.json())
     .then(d => {
-      document.getElementById('brightVal').innerText = d.name;
+      updateBrightUI(d.level);
       setStatus('Brightness: ' + d.name, '#38bdf8');
     })
-    .catch(() => setStatus('Error changing brightness', '#f87171'));
+    .catch(() => setStatus('Error changing brightness', '#fb7185'));
 }
 function checkBattery() {
   fetch('/battery')
     .then(r => r.json())
     .then(d => {
-      document.getElementById('batVal').innerText = d.pct + '%';
+      document.getElementById('batVal').innerHTML = `${d.pct}% <small>${d.volt}V</small>`;
+      document.getElementById('batBar').style.width = d.pct + '%';
       setStatus(`Battery: ${d.pct}% (${d.volt}V)`, '#fbbf24');
     })
-    .catch(() => setStatus('Error reading battery', '#f87171'));
+    .catch(() => setStatus('Error reading battery', '#fb7185'));
 }
 function saveSettings() {
   const thr = document.getElementById('thr').value;
@@ -258,23 +732,20 @@ function saveSettings() {
   fetch(`/save?thr=${thr}&rel=${rel}&cnt=${cnt}&tmo=${tmo}`)
     .then(r => r.text())
     .then(() => setStatus('Settings Saved!', '#4ade80'))
-    .catch(() => setStatus('Error saving settings', '#f87171'));
+    .catch(() => setStatus('Error saving settings', '#fb7185'));
 }
 function resetDefaults() {
   fetch('/default')
     .then(r => r.json())
     .then(d => {
       document.getElementById('thr').value = d.thr.toFixed(2);
-      document.getElementById('thrVal').innerText = d.thr.toFixed(2);
       document.getElementById('rel').value = d.rel.toFixed(2);
-      document.getElementById('relVal').innerText = d.rel.toFixed(2);
       document.getElementById('cnt').value = d.cnt;
-      document.getElementById('cntVal').innerText = d.cnt;
       document.getElementById('tmo').value = d.tmo;
-      document.getElementById('tmoVal').innerText = (d.tmo == 0 ? '0s (Off)' : d.tmo + 's');
+      updateSliderUI();
       setStatus('Default Settings Restored & Saved!', '#38bdf8');
     })
-    .catch(() => setStatus('Error resetting defaults', '#f87171'));
+    .catch(() => setStatus('Error resetting defaults', '#fb7185'));
 }
 function turnOffAP() {
   fetch('/stop')
@@ -305,10 +776,17 @@ void saveBrakeSettingsToNVS() {
 void handleRoot() {
   readBattery();
   String html = FPSTR(WEB_UI_HTML);
-  String brightName = (brightnessLevel == 1) ? "Low" : ((brightnessLevel == 2) ? "Medium" : "High");
-  html.replace("%MODE%", String(currentMode));
-  html.replace("%BRIGHT%", brightName);
+  const char* modeLabels[11] = {
+    "", "Slow Flash", "Smooth Breathing", "Triple Strobe", "Red-Yellow",
+    "One-Way Scanner", "Amber Comet", "Alternating 2x2", "Red Sparkle",
+    "Heartbeat Pulse", "Rain / Fog Strobe"
+  };
+  String modePad = (currentMode < 10) ? ("0" + String(currentMode)) : String(currentMode);
+  html.replace("%MODE_PAD%", modePad);
+  html.replace("%MODE_NAME%", modeLabels[currentMode]);
+  html.replace("%BRIGHT_LVL%", String(brightnessLevel));
   html.replace("%BAT%", String(batteryPercent));
+  html.replace("%VOLT%", String(batteryVoltage, 2));
   html.replace("%THR%", String(brakeThreshold, 2));
   html.replace("%REL%", String(brakeReleaseThreshold, 2));
   html.replace("%CNT%", String(requiredBrakeCount));
@@ -320,7 +798,7 @@ void handleRoot() {
 
 void handleSave() {
   if (server.hasArg("thr")) {
-    brakeThreshold = constrain(server.arg("thr").toFloat(), 0.10f, 0.22f);
+    brakeThreshold = constrain(server.arg("thr").toFloat(), 0.05f, 0.18f);
   }
   if (server.hasArg("rel")) {
     brakeReleaseThreshold = constrain(server.arg("rel").toFloat(), 0.04f, 0.08f);
@@ -561,7 +1039,7 @@ void setup() {
   prefs.begin("taillight", true);
   currentMode = constrain(prefs.getInt("mode", 1), 1, totalModes);
   brightnessLevel = constrain(prefs.getInt("bright", 3), 1, 3);
-  brakeThreshold = constrain(prefs.getFloat("brkThr", DEFAULT_BRAKE_THRESHOLD), 0.10f, 0.22f);
+  brakeThreshold = constrain(prefs.getFloat("brkThr", DEFAULT_BRAKE_THRESHOLD), 0.05f, 0.18f);
   brakeReleaseThreshold = constrain(prefs.getFloat("brkRel", DEFAULT_BRAKE_RELEASE_THRESHOLD), 0.04f, 0.08f);
   requiredBrakeCount = constrain(prefs.getInt("brkCnt", DEFAULT_REQUIRED_BRAKE_COUNT), 4, 10);
   timeoutSeconds = constrain(prefs.getInt("tmOut", DEFAULT_TIMEOUT_SEC), 0, 30);
