@@ -10,6 +10,9 @@ Debounced Brake State Machine
 Wakes sleeping lights when filteredAx or ay_g changes by more than 0.05 (motionThreshold), and turns lights off after timeoutSeconds (default 30s, adjustable 0–30s, with 0 disabling auto-off) of inactivity when not running the Soft AP.
 # Lighting Modes & Visual Feedback 10 Lighting Modes
 # Wi-Fi Soft AP, Captive Portal & Flash Persistence
+SmartBrake Web UI Visual Preview
+<img width="800" height="1517" alt="Visual Preview" src="https://github.com/user-attachments/assets/07b3daae-778e-47bc-8734-f272ebb306b0" />
+
 Captive Portal Access Point: Long-pressing D3 for 2 seconds starts an open Wi-Fi access point named SmartBrake at 192.168.4.1 with a DNSServer redirecting captive-portal probe URLs (Android, iOS, macOS, Windows) and unknown paths to /. During Soft AP mode, LEDs blink blue (0, 0, 255) except during a 2-second preview after changing mode from the web UI.
 # NVS Flash Persistence: 
 Uses Preferences under namespace "taillight" to persist mode, bright, brkThr, brkRel, brkCnt, and tmOut across reboots and deep sleep cycles.
